@@ -1,0 +1,139 @@
+.request-list {
+  margin-top: 24px;
+}
+
+.request-row {
+  vertical-align: top;
+}
+
+.employee-details-cell {
+  min-width: 250px;
+  padding: 8px 0;
+}
+
+.employee-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.employee-name-row strong {
+  font-size: 15px;
+  color: #333;
+}
+
+.employee-id-badge {
+  background: #667eea;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.employee-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #555;
+}
+
+.employee-info-row > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 70px;
+}
+
+.approval-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.approval-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.approval-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 11px;
+}
+
+.approval-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.approval-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.approval-badge.approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.approval-badge.rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.first-approver-info {
+  padding: 8px;
+  background: #d4edda;
+  border-radius: 6px;
+  border: 1px solid #c3e6cb;
+}
+
+.approval-time {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    overflow-x: scroll;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .employee-details-cell {
+    min-width: 200px;
+  }
+  
+  .employee-info-row {
+    font-size: 11px;
+  }
+  
+  .info-label {
+    min-width: 60px;
+  }
+}
+

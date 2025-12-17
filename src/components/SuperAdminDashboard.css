@@ -1,0 +1,332 @@
+.system-management {
+  padding: 24px 0;
+}
+
+.system-info {
+  margin-bottom: 32px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.system-info p {
+  margin-bottom: 12px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.system-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.approval-history-view {
+  padding: 24px 0;
+}
+
+.approval-history-view h3 {
+  margin-bottom: 24px;
+  color: #333;
+  font-size: 20px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.history-card {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.history-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.history-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.history-timeline-small {
+  margin-top: 12px;
+  padding-left: 20px;
+  border-left: 2px solid #e0e0e0;
+}
+
+.history-item-small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.history-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #667eea;
+  flex-shrink: 0;
+}
+
+.approval-history-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 28px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.history-timeline {
+  padding: 20px;
+}
+
+.history-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.history-content {
+  flex: 1;
+}
+
+.history-action {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.history-time {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.history-reason {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+  margin-top: 4px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+/* Themed notification icon and unique animation (spin) for Super Admin */
+.notification-icon {
+  color: var(--primary);
+  display: inline-block;
+}
+
+.notification-icon svg {
+  width: 1.25em;
+  height: 1.25em;
+  display: block;
+}
+
+.notify-spin {
+  animation: spin-notify 1.2s linear infinite;
+}
+
+@keyframes spin-notify {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Animated Icons for Stat Cards */
+.animated-icon {
+  font-size: 2.5rem;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover .animated-icon {
+  transform: scale(1.2);
+}
+
+/* Bounce Animation */
+.icon-bounce {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Pulse Animation */
+.icon-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Rotate Animation */
+.icon-rotate {
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Swing Animation */
+.icon-swing {
+  animation: swing 2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes swing {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+}
+
+/* Hamburger Menu Dropdown - Ensure it's always on top */
+[data-menu-container] {
+  position: relative;
+  overflow: visible !important;
+  z-index: 999999 !important;
+}
+
+[data-menu-container] > div[style*="position: fixed"] {
+  z-index: 999999 !important;
+  position: fixed !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Ensure dashboard doesn't clip the menu */
+.dashboard {
+  overflow: visible !important;
+}
+
+.dashboard-header {
+  overflow: visible !important;
+  z-index: 999999 !important;
+}
+
+/* Ensure cards and stats don't overlap menu */
+.stats-grid,
+.card {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 100%;
+    margin: 10px;
+  }
+  
+  .animated-icon {
+    font-size: 2rem;
+  }
+}
