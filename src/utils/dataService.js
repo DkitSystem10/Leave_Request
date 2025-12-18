@@ -189,6 +189,10 @@ export const dataService = {
     return employees;
   },
 
+  getActiveEmployees: () => {
+    return employees.filter(emp => emp.status === 'active' || emp.status === 'Active' || !emp.status);
+  },
+
   // Fetch all employees from database (async)
   fetchAllEmployeesFromDB: async () => {
     try {
@@ -817,10 +821,16 @@ export const dataService = {
       let managerApproval = null;
       let hrApproval = null;
       let currentApprover = 'any';
+      let employeeRole = 'employee'; // Default role
 
       try {
         if (requestData.employeeId && isSupabaseConfigured()) {
           const emp = await dataService.getEmployeeByCode(requestData.employeeId);
+
+          // Store the employee's role
+          if (emp && emp.role) {
+            employeeRole = emp.role;
+          }
 
           // CONDITION 0: If Requester IS HR, skip manager & HR approval, go to Super Admin
           if (emp && emp.role === 'hr') {
@@ -863,7 +873,7 @@ export const dataService = {
                 .select('id')
                 .eq('employee_id', emp.managerId)
                 .eq('status', 'approved')
-                .in('type', ['leave', 'halfday'])
+                .in('type', ['leave', 'halfday', 'od'])
                 .lte('start_date', endDate)
                 .gte('end_date', startDate);
 
@@ -885,13 +895,13 @@ export const dataService = {
             const startDate = requestData.startDate;
             const endDate = requestData.endDate || requestData.startDate;
 
-            // Check if manager has approved leave overlapping the request
+            // Check if manager has approved leave/OD overlapping the request
             const { data: managerLeaves } = await supabase
               .from('requests')
               .select('id')
               .eq('employee_id', emp.managerId)
               .eq('status', 'approved')
-              .in('type', ['leave', 'halfday']) // Only leave/halfday prevents approval duties
+              .in('type', ['leave', 'halfday', 'od']) // leave/halfday/OD prevents approval duties
               .lte('start_date', endDate)
               .gte('end_date', startDate);
 
@@ -917,6 +927,7 @@ export const dataService = {
         employee_id: requestData.employeeId,
         employee_name: requestData.employeeName,
         department: requestData.department,
+        role: employeeRole, // Add role to the request
         type: requestData.type,
         leave_mode: requestData.leaveMode || null,
         no_of_days: noOfDays,
@@ -937,11 +948,31 @@ export const dataService = {
         created_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('requests')
         .insert([requestPayload])
         .select()
         .single();
+
+      // If error is about missing 'role' column, retry without it
+      if (error && (error.message.includes("role") || error.message.includes("schema"))) {
+        console.warn('Role column error. Retrying without role field and skipping select...');
+
+        // Remove role field and retry
+        const { role, ...payloadWithoutRole } = requestPayload;
+        const retry = await supabase
+          .from('requests')
+          .insert([payloadWithoutRole]); // Removed .select() and .single()
+
+        if (retry.error) {
+          console.error('Retry failed:', retry.error);
+          throw retry.error;
+        }
+
+        // Use payload data as we generated the ID ourselves
+        data = payloadWithoutRole;
+        error = null;
+      }
 
       if (error) {
         console.error('Error creating request:', error);
@@ -960,7 +991,7 @@ export const dataService = {
   },
 
   // --- Dashboard Statistics Methods ---
-  
+
   // Get today's attendance statistics
   getTodayAttendanceStats: async () => {
     try {
@@ -976,7 +1007,7 @@ export const dataService = {
 
       // Get today's requests (all types)
       const todayRequests = requests.filter(req => req.fromDate === todayStr || req.startDate === todayStr);
-      
+
       // Get employees on leave today (approved leave/halfday requests)
       const employeesOnLeaveToday = new Set();
       todayRequests.forEach(req => {
@@ -1038,14 +1069,14 @@ export const dataService = {
       allEmployees.forEach(emp => {
         if (emp.status !== 'Active' && emp.status !== 'active') return;
 
-        const hasLeave = todayRequests.some(req => 
-          req.status === 'approved' && 
+        const hasLeave = todayRequests.some(req =>
+          req.status === 'approved' &&
           (req.type === 'leave' || req.type === 'halfday') &&
           (req.employeeId === emp.id || req.employee_id === emp.id)
         );
 
-        const hasPermission = todayRequests.some(req => 
-          req.status === 'approved' && 
+        const hasPermission = todayRequests.some(req =>
+          req.status === 'approved' &&
           req.type === 'permission' &&
           (req.employeeId === emp.id || req.employee_id === emp.id)
         );
@@ -1165,7 +1196,6 @@ export const dataService = {
       const { data, error } = await supabase
         .from('requests')
         .select('*')
-        .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -1174,8 +1204,12 @@ export const dataService = {
       }
 
       return (data || []).filter(req => {
+        const s = (req.status || '').toLowerCase();
+        if (s !== 'pending') return false;
+
         const hrApproval = req.hr_approval || req.hrApproval;
-        return !hrApproval;
+        // Show if no HR approval object, OR HR approval object status is 'pending'
+        return !hrApproval || hrApproval.status === 'pending';
       }).map(req => dataService.normalizeRequest(req));
     } catch (error) {
       console.error('Error in getRequestsByHR:', error);
@@ -1214,7 +1248,7 @@ export const dataService = {
           .select('id')
           .eq('employee_id', hrId)
           .eq('status', 'approved')
-          .in('type', ['leave', 'halfday'])
+          .in('type', ['leave', 'halfday', 'od'])
           .lte('start_date', today)
           .gte('end_date', today);
         hrIsOnLeave = hrOnLeave && hrOnLeave.length > 0;
@@ -1557,19 +1591,34 @@ export const dataService = {
         };
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('requests')
         .update(updateData)
-        .eq('id', requestId)
-        .select()
-        .single();
+        .eq('id', requestId); // Removed .select() and .single()
 
       if (error) {
         console.error('Error approving request:', error);
+
+        // Retry with ONLY status 'approved' if it failed (likely due to missing columns)
+        if (error.message && (error.message.includes("column") || error.message.includes("schema"))) {
+          console.warn('Retrying approval with status only...');
+          const retry = await supabase
+            .from('requests')
+            .update({ status: 'approved' })
+            .eq('id', requestId);
+
+          if (retry.error) {
+            console.error('Retry failed:', retry.error);
+            return null;
+          }
+          // Return basic success
+          return { ...request, status: 'approved' };
+        }
         return null;
       }
 
-      return data;
+      // Return local data since we know the update succeeded
+      return { ...request, ...updateData };
     } catch (error) {
       console.error('Error in approveRequest:', error);
       return null;
