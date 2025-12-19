@@ -13,9 +13,19 @@ const isSupabaseConfigured = () => {
 const employees = [
   { id: 'EMP001', name: 'John Doe', email: 'john@company.com', password: 'john123', department: 'Technology', role: 'employee', designation: 'Software Engineer', managerId: 'MGR001', status: 'active' },
   { id: 'MGR001', name: 'Manager', email: 'manager@company.com', password: 'manager123', department: 'Manager', role: 'manager', designation: 'Manager', managerId: 'HR001', status: 'active' },
-  { id: 'HR001', name: 'HR Person', email: 'hr@company.com', password: 'hr123', department: 'HR', role: 'hr', designation: 'HR Manager', managerId: 'ADMIN', status: 'active' },
-  { id: 'ADMIN', name: 'Super Admin', email: 'super@company.com', password: 'admin123', department: 'Admin', role: 'superadmin', designation: 'System Administrator', managerId: null, status: 'active' },
+  { id: 'HR001', name: 'HR Person', email: 'hr@company.com', password: 'hr123', department: 'HR', role: 'hr', designation: 'HR Manager', managerId: 'ADMIN001', status: 'active' },
+  { id: 'ADMIN001', name: 'Super Admin', email: 'admin@company.com', password: 'admin123', department: 'Admin', role: 'superadmin', designation: 'System Administrator', managerId: null, status: 'active' },
 ];
+
+/**
+ * Helper to check if a user status is deactivated
+ * Handles various status variations: 'Deactive', 'deactive', 'deactivated', 'Deactivated'
+ */
+const isUserDeactivated = (status) => {
+  if (!status) return false;
+  const s = status.toLowerCase();
+  return s === 'deactive' || s === 'deactivated';
+};
 
 // Shared Holidays Data
 let holidays = [
@@ -100,14 +110,14 @@ export const dataService = {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error authenticating:', error);
-        const employee = employees.find(emp => emp.email === email && emp.password === password && emp.status !== 'Deactive');
-        if (employee && employee.status === 'Deactive') return null;
+        const employee = employees.find(emp => emp.email === email && emp.password === password);
+        if (employee && isUserDeactivated(employee.status)) return null;
         return employee || null;
       }
 
       const dbEmp = data || employees.find(emp => emp.email === email && emp.password === password);
       // Check status
-      if (dbEmp && (dbEmp.status === 'Deactive' || dbEmp.status === 'deactive' || dbEmp.status === 'deactivated' || dbEmp.status === 'Deactivated')) {
+      if (dbEmp && isUserDeactivated(dbEmp.status)) {
         throw new Error('Your account has been deactivated. Please contact HR.');
       }
       return dbEmp || null;
@@ -116,7 +126,7 @@ export const dataService = {
       if (error.message.includes('deactivated')) throw error;
 
       const localEmp = employees.find(emp => emp.email === email && emp.password === password);
-      if (localEmp && (localEmp.status === 'Deactive' || localEmp.status === 'deactivated')) {
+      if (localEmp && isUserDeactivated(localEmp.status)) {
         throw new Error('Your account has been deactivated. Please contact HR.');
       }
       return localEmp || null;
@@ -141,12 +151,12 @@ export const dataService = {
           emp.department === department &&
           emp.password === password
         );
-        if (employee && (employee.status === 'Deactive' || employee.status === 'Deactivated')) return null;
+        if (employee && isUserDeactivated(employee.status)) return null;
         return employee || null;
       }
 
       if (data) {
-        if (data.status === 'Deactive' || data.status === 'deactive' || data.status === 'deactivated' || data.status === 'Deactivated') {
+        if (isUserDeactivated(data.status)) {
           throw new Error('Your account has been deactivated.');
         }
         return {
@@ -167,9 +177,7 @@ export const dataService = {
         emp.department === department &&
         emp.password === password
       );
-      if (employee && employee.status === 'Deactive') {
-        throw new Error('Your account has been deactivated.');
-      }
+      if (employee && isUserDeactivated(employee.status)) return null;
       return employee || null;
     } catch (error) {
       if (error.message.includes('deactivated')) throw error;
@@ -179,7 +187,7 @@ export const dataService = {
         emp.department === department &&
         emp.password === password
       );
-      if (employee && employee.status === 'Deactive') return null;
+      if (employee && isUserDeactivated(employee.status)) return null;
       return employee || null;
     }
   },
@@ -190,7 +198,7 @@ export const dataService = {
   },
 
   getActiveEmployees: () => {
-    return employees.filter(emp => emp.status === 'active' || emp.status === 'Active' || !emp.status);
+    return employees.filter(emp => !isUserDeactivated(emp.status));
   },
 
   // Fetch all employees from database (async)

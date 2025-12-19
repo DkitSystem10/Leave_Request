@@ -11,7 +11,6 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [showMobileCredentials, setShowMobileCredentials] = useState(false);
   const { login } = useAuth();
-
   // Available departments
   const departments = ['Technology', 'Education', 'Finance', 'Associates', 'Intern', 'HR', 'Sales', 'Marketing', 'Admin', 'Manager'];
 
@@ -53,6 +52,45 @@ function Login() {
 
     return departmentMap[prefix] || '';
   };
+  const [loadingCredentials, setLoadingCredentials] = useState(true);
+  const [employeesByRole, setEmployeesByRole] = useState({
+    employee: [],
+    manager: [],
+    hr: [],
+    superadmin: [],
+  });
+
+  // Fetch employees on mount
+  React.useEffect(() => {
+    const loadEmployees = async () => {
+      setLoadingCredentials(true);
+      try {
+        // Fetch from DB if possible
+        const all = await dataService.fetchAllEmployeesFromDB();
+
+        // Filter for active users only
+        // Consider 'active', 'rejoined', 'Active', or empty status as active
+        const active = (all || []).filter(emp =>
+          !emp.status ||
+          emp.status.toLowerCase() === 'active' ||
+          emp.status.toLowerCase() === 'rejoined'
+        );
+
+        setEmployeesByRole({
+          employee: active.filter(emp => emp.role === 'employee'),
+          manager: active.filter(emp => emp.role === 'manager'),
+          hr: active.filter(emp => emp.role === 'hr'),
+          superadmin: active.filter(emp => emp.role === 'superadmin'),
+        });
+      } catch (err) {
+        console.error('Failed to load demo credentials:', err);
+      } finally {
+        setLoadingCredentials(false);
+      }
+    };
+
+    loadEmployees();
+  }, [setLoadingCredentials, setEmployeesByRole]);
 
   // Auto-fill department when employee code changes
   const handleEmpCodeChange = (e) => {
@@ -94,24 +132,13 @@ function Login() {
     login(employee);
   };
 
-  // Get all employees and group them by role
-  const allEmployees = dataService.getAllEmployees().filter(emp =>
-    !emp.status || emp.status.toLowerCase() === 'active'
-  );
-
-  const employeesByRole = {
-    employee: allEmployees.filter(emp => emp.role === 'employee'),
-    manager: allEmployees.filter(emp => emp.role === 'manager'),
-    hr: allEmployees.filter(emp => emp.role === 'hr'),
-    superadmin: allEmployees.filter(emp => emp.role === 'superadmin'),
-  };
-
   const roleConfig = {
     employee: { icon: '👤', label: 'Employees', color: '#3b82f6' },
     manager: { icon: '👔', label: 'Manager', color: '#8b5cf6' },
     hr: { icon: '💼', label: 'HR', color: '#ec4899' },
     superadmin: { icon: '⚡', label: 'Super Admin', color: '#f59e0b' },
   };
+
 
   return (
     <div className="login-container">
@@ -130,50 +157,62 @@ function Login() {
             <h2 className="demo-title">🔑 Demo Credentials</h2>
             <p className="demo-subtitle">Use any of these accounts to login</p>
           </div>
+
           <div className="demo-accounts">
-            {Object.entries(employeesByRole).map(([role, employees]) => {
-              if (employees.length === 0) return null;
-              const config = roleConfig[role];
-              return (
-                <div key={role} className="role-section">
-                  <div className="role-header" style={{ borderLeftColor: config.color }}>
-                    <span className="role-icon">{config.icon}</span>
-                    <span className="role-label">{config.label}</span>
-                    <span className="role-count">{employees.length}</span>
-                  </div>
-                  <div className="employees-list">
-                    {employees.map(emp => (
-                      <div key={emp.id} className="demo-account">
-                        <div className="employee-info">
-                          <strong className="employee-name">{emp.name}</strong>
-                          <span className="employee-id">{emp.id}</span>
+            {loadingCredentials ? (
+              <div className="loading-state">
+                <div className="spinner"></div>
+                <p>Loading credentials...</p>
+              </div>
+            ) : Object.keys(employeesByRole).every(role => employeesByRole[role].length === 0) ? (
+              <div className="empty-state">
+                <p>No active accounts found.</p>
+              </div>
+            ) : (
+              Object.entries(employeesByRole).map(([role, employees]) => {
+                if (employees.length === 0) return null;
+                const config = roleConfig[role];
+                return (
+                  <div key={role} className="role-section">
+                    <div className="role-header" style={{ borderLeftColor: config.color }}>
+                      <span className="role-icon">{config.icon}</span>
+                      <span className="role-label">{config.label}</span>
+                      <span className="role-count">{employees.length}</span>
+                    </div>
+                    <div className="employees-list">
+                      {employees.map(emp => (
+                        <div key={emp.id} className="demo-account">
+                          <div className="employee-info">
+                            <strong className="employee-name">{emp.name}</strong>
+                            <span className="employee-id">{emp.id}</span>
+                          </div>
+                          <div className="credentials-row">
+                            <div className="credential-item">
+                              <span className="credential-label">Code:</span>
+                              <code className="credential-value">{emp.id}</code>
+                            </div>
+                            <div className="credential-item">
+                              <span className="credential-label">Dept:</span>
+                              <code className="credential-value">{emp.department}</code>
+                            </div>
+                            <div className="credential-item">
+                              <span className="credential-label">Pass:</span>
+                              <code className="credential-value">{emp.password}</code>
+                            </div>
+                          </div>
+                          {emp.department && (
+                            <div className="employee-meta">
+                              <span className="meta-badge">{emp.department}</span>
+                              {emp.designation && <span className="meta-badge">{emp.designation}</span>}
+                            </div>
+                          )}
                         </div>
-                        <div className="credentials-row">
-                          <div className="credential-item">
-                            <span className="credential-label">Code:</span>
-                            <code className="credential-value">{emp.id}</code>
-                          </div>
-                          <div className="credential-item">
-                            <span className="credential-label">Dept:</span>
-                            <code className="credential-value">{emp.department}</code>
-                          </div>
-                          <div className="credential-item">
-                            <span className="credential-label">Pass:</span>
-                            <code className="credential-value">{emp.password}</code>
-                          </div>
-                        </div>
-                        {emp.department && (
-                          <div className="employee-meta">
-                            <span className="meta-badge">{emp.department}</span>
-                            {emp.designation && <span className="meta-badge">{emp.designation}</span>}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
           <div className="security-badge">🔒 Secure Authentication System</div>
         </div>
